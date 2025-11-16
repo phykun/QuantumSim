@@ -2,7 +2,7 @@ module ManyBody
 
 using LinearAlgebra
 
-export BoseSystem, ChainLattice, H_b_onebody, H_b_twobody, H_BoseHubbard
+export BoseSystem, ChainLattice, H_b_onebody, H_b_twobody, H_BoseHubbard, H_f_onebody
 export FermiSystem
 
 struct BoseSystem
@@ -271,6 +271,83 @@ function _fermi_basis(N_f::Int, N_site::Int, dis_spin::Vector{Int64})
         push!(basis, collect(combo))
     end
     return reverse.(basis)
+end
+
+function H_f_onebody(system::FermiSystem, t, tuples)
+    isa(t, Number) && (t = fill(t, length(tuples)))
+    basis = system.basis
+    basis_dict = system.basis_dict
+    N_spin = length(system.dis_spin)
+    Ns = length(basis)
+    H = zeros(Ns, Ns)
+    for idx_spin = 1:N_spin
+        for (idx1, (i, j)) in enumerate(tuples)
+            for (idx2, state) in enumerate(basis)
+                state_spin = copy(state[idx_spin])
+                if state_spin[j] == 1 && state_spin[i] == 0
+                    state_s_f = copy(state_spin)
+                    coe1 = sum(state_s_f[1:j-1] .== 1)
+                    state_s_f[j] -= 1
+                    coe2 = sum(state_s_f[1:i-1] .== 1)
+                    state_s_f[i] += 1
+                    coe = t[idx1] * (-1)^(coe1 + coe2)
+                    state_f = copy(state)
+                    state_f[idx_spin] = state_s_f
+                    if haskey(basis_dict, state_f)
+                        new_idx = basis_dict[state_f]
+                        H[idx2, new_idx] += coe
+                    end
+                end
+            end
+        end
+    end
+    return H
+end
+
+function H_f_twobody(system::FermiSystem, U, quadruples)
+    isa(U, Number) && (U = fill(U, length(quadruples)))
+    @assert length(U) == length(quadruples) "相互作用强度与二体数量不匹配"
+    basis = system.basis
+    basis_dict = system.basis_dict
+    N_spin = length(system.dis_spin)
+    Ns = length(basis)
+    H = zeros(Ns, Ns)
+    for idx_spin = 1:N_spin
+        for (idx1, (i, j, k, l)) in enumerate(quadruples)
+            for (idx2, state) in enumerate(basis)
+                state_spin = copy(state[idx_spin])
+                if state_spin[k] == 1 && state_spin[l] == 1
+                    state_s_f = copy(state_spin)
+                    coe_s = sum(state_s_f[1:k-1] .== 1)
+                    state_s_f[k] -= 1
+                    state_s_f[l] -= 1
+                    state_s_f[k] < 0 && continue
+                    coe_s += sum(state_s_f[1:l-1] .== 1)
+                    if state_s_t[i] ==0 && state_s_t[j] ==0
+                        coe_s += sum(state_s_f[1:j-1] .== 1)
+                        state_s_f[j] += 1
+                        coe_s += sum(state_s_f[1:i-1] .== 1)
+                        state_s_f[i] += 1
+                        state_s_f[i] > 1 && continue
+                        coe = U[idx1] / 2 * (-1)^(coe_s)
+                        state_f = copy(state)
+                        state_f[idx_spin] = state_s_f
+                        if haskey(basis_dict, state_f)
+                            final_idx = basis_dict[state_f]
+                            H[idx2, final_idx] += coe
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return H
+end
+
+function H_FermiHubbard(system::FermiSystem, t, U, periodic=false)
+    tuples = ChainLattice(system.N_site, periodic)
+    quadruples = [(i, i, i, i) for i in 1:system.N_site]
+    return H_b_onebody(system, t, tuples) + H_b_twobody(system, U, quadruples)
 end
 
 end
