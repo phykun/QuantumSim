@@ -13,7 +13,7 @@ export H_kinetic, Hk_period, propagation, RWA, RearrangeHam
 
 include("ManyBody.jl")
 using .ManyBody
-export BoseSystem, ChainLattice, H_b_onebody, H_b_twobody, H_BoseHubbard
+export BoseSystem, print_basis, H_b_onebody, H_b_twobody, H_BoseHubbard
 export FermiSystem, H_f_onebody
 
 # 导出主方程求解器

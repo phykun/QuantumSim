@@ -3,8 +3,8 @@ export u_nk_Position, get_bond, Blo_Wan_FBZ
 function u_nk_Position(state, period_k, x)
     order = (size(state, 1) - 1) / 2
     order_set = collect(-order:order)
-    exp_factor1 = exp.(im * period_k * x * order_set')
-    u_nk = exp_factor1 * state
+    exp_factor = exp.(im * period_k * x * order_set')
+    u_nk = exp_factor * state
     for i in axes(u_nk, 2)
         tmp = norm(u_nk[:, i])
         u_nk[:, i] /= tmp
