@@ -153,8 +153,9 @@ function print_basis(system::BoseSystem)
         for j in 1:N_spin
             n_start = (j - 1) * N_site + 1
             n_end = j * N_site
-            println("自旋$j:", basis[n_start:n_end, i])
+            print("自旋$j:", basis[n_start:n_end, i],";")
         end
+        println()
     end
 end
 
@@ -200,7 +201,7 @@ function H_b_onebody(system::BoseSystem, t::Number, periodic::Bool)
     return H_b_onebody(system,hopping)
 end
 
-# t::{site1,site2,N_spin,N_spin} only for first energy bond
+# t::{N_site,N_site,N_spin,N_spin} only for first energy bond
 function H_b_onebody(system::BoseSystem, t::Array{Float64, 4})
     N_site = system.N_site
     N_spin = system.N_spin
@@ -236,12 +237,17 @@ function H_b_twobody(system::BoseSystem, U::Number)
     basis = system.basis
     Ns = size(basis,2)
     H = zeros(Ns, Ns)
-    for spin in 1:N_spin
+    for spin1 in 1:N_spin, spin2 in 1:N_spin
         for index in 1:N_site
             for (idx, state) in enumerate(eachcol(basis))
-                tmp = (spin - 1) * N_site + index
-                if state[tmp] >= 2
-                    coe = U / 2 * state[tmp] * (state[tmp]-1)
+                s1 = (spin1 - 1) * N_site + index
+                s2 = (spin2 - 1) * N_site + index
+                if state[s1] >= 1 && state[s2] >= 1
+                    if spin1 == spin2
+                        coe = U / 2 * state[s1] * (state[s1]-1)
+                    else
+                        coe = U / 2 * state[s1] * state[s2]
+                    end
                     H[idx,idx] += coe
                 end
             end
@@ -262,11 +268,11 @@ function H_b_twobody(system::BoseSystem, U::Array{Float64, 4})
     for spin1 in 1:N_spin, spin2 in 1:N_spin
         for index in CartesianIndices(U)
             i,j,k,l = index.I
+            s_i = (spin1 - 1) * N_site + i
+            s_j = (spin2 - 1) * N_site + j
+            s_k = (spin1 - 1) * N_site + k
+            s_l = (spin2 - 1) * N_site + l
             for (idx, state) in enumerate(eachcol(basis))
-                s_i = (spin1 - 1) * N_site + i
-                s_j = (spin2 - 1) * N_site + j
-                s_k = (spin1 - 1) * N_site + k
-                s_l = (spin2 - 1) * N_site + l
                 if state[s_k] >= 1 && state[s_l] >= 1
                     state_t = copy(state)
                     state_t[s_k] -= 1
@@ -274,9 +280,9 @@ function H_b_twobody(system::BoseSystem, U::Array{Float64, 4})
                     state_t[s_k] < 0 && continue
                     if state_t[s_i] < N_max && state_t[s_j] < N_max
                         state_f = copy(state_t)
-                        state_f[i] += 1
-                        state_f[j] += 1
-                        state_f[i] > N_max && continue
+                        state_f[s_i] += 1
+                        state_f[s_j] += 1
+                        state_f[s_i] > N_max && continue
                         coe = U[i,j,k,l] / 2 *
                               sqrt(state[s_k]) * sqrt(state_t[s_l] + 1) *
                               sqrt(state_t[s_j] + 1) * sqrt(state_f[s_i])
