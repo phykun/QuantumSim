@@ -13,8 +13,9 @@ export H_kinetic, Hk_period, propagation, RWA, RearrangeHam
 
 include("ManyBody.jl")
 using .ManyBody
-export BoseSystem, print_basis, H_b_onebody, H_b_twobody, H_BoseHubbard
-export FermiSystem, H_f_onebody
+export BoseSystem, H_b_onebody, H_b_twobody, H_BoseHubbard, H_f_onebody
+export FermiSystem, H_f_onebody, H_f_twobody
+export print_basis
 
 # 导出主方程求解器
 include("MasterEquation.jl")
