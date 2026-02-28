@@ -31,7 +31,7 @@ function propagation(H, psi0, t, ħ=1)
         c = P' * psi[:, 1]
         exp_factors = exp.(-im * D * t' / ħ)
         psi = P * (c .* exp_factors)
-        return psi, P, D
+        return psi
     else
         dt = t[2] - t[1]
         for i in 1:n_t-1

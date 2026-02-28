@@ -120,7 +120,7 @@ function _boson_basis(N_b::Int, N_site::Int, N_max::Int, dis_spin::Vector{Int})
             temp_col[row_start:row_end] = spin_basis[spin_idx][:, col_idx]
         end
         valid = true
-        for i in 1:N_spin
+        for i in 1:N_site
             occupancy[i] = sum(@view temp_col[i:N_site:end])
             if occupancy[i] > N_max
                 valid = false
@@ -162,7 +162,7 @@ function H_b_onebody(system::BoseSystem, t::Matrix)
                     state_f = copy(state)
                     state_f[s2] -= 1
                     state_f[s1] += 1
-                    coe = t[i, j] * sqrt(state[j]) * sqrt(state_f[i])
+                    coe = t[i, j] * sqrt(state[s2]) * sqrt(state_f[s1])
                     idx_f = findfirst(col -> state_f == col, eachcol(basis))
                     !isnothing(idx_f) && (H[idx_f, idx] += coe)
                 end
@@ -207,7 +207,7 @@ function H_b_onebody(system::BoseSystem, t::Array{Float64,4})
                 state_f = copy(state)
                 state_f[s2] -= 1
                 state_f[s1] += 1
-                coe = t[i, j, spin1, spin2] * sqrt(state[j]) * sqrt(state_f[i])
+                coe = t[i, j, spin1, spin2] * sqrt(state[s2]) * sqrt(state_f[s1])
                 idx_f = findfirst(col -> state_f == col, eachcol(basis))
                 !isnothing(idx_f) && (H[idx_f, idx] += coe)
             end
